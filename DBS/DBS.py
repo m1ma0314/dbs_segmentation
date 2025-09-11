@@ -15,7 +15,7 @@ from slicer.parameterNodeWrapper import (
 )
 
 from slicer import vtkMRMLScalarVolumeNode
-
+from slicer import vtkMRMLMarkupsFiducialNode
 
 #
 # DBS
@@ -29,7 +29,7 @@ class DBS(ScriptedLoadableModule):
 
     def __init__(self, parent):
         ScriptedLoadableModule.__init__(self, parent)
-        self.parent.title = _("Fiducial Automatic Segmentation in Deep Brain Stimulation)  # TODO: make this more human readable by adding spaces
+        self.parent.title = _("Fiducial Automatic Segmentation in Deep Brain Stimulation")  
         # TODO: set categories (folders where the module shows up in the module selector)
         self.parent.categories = [translate("qSlicerAbstractCoreModule", "Examples")]
         self.parent.dependencies = []  # TODO: add here list of module names that this module requires
@@ -126,6 +126,7 @@ class DBSParameterNode:
     """
 
     inputVolume: vtkMRMLScalarVolumeNode
+    targetMarkup: vtkMRMLMarkupsFiducialNode
     segmentName: str = "Segment_1"
     doCenterline: bool = False
     
@@ -253,6 +254,7 @@ class DBSWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             # Fallback: if you also added a file path input, load it here before using p.inputVolume
             self.logic.process(
                 inputVolume=p.inputVolume,
+                targetMarkup=p.targetMarkup,
                 segment_name=p.segmentName,
                 do_centerline=p.doCenterline
             )
@@ -278,6 +280,7 @@ class DBSLogic(ScriptedLoadableModuleLogic):
 
     def process(self,
                 inputVolume: vtkMRMLScalarVolumeNode,
+                targetMarkup: vtkMRMLMarkupsFiducialNode,
                 segment_name: str = "Segment_1",
                 do_centerline: bool = False):
         if not inputVolume:
@@ -287,13 +290,34 @@ class DBSLogic(ScriptedLoadableModuleLogic):
         start = time.time()
         logging.info("Pipeline started")
 
+        #crop image
+        roi=slicer.mrmlScene.AddNewNodeByClass("vtkMRMLMarkupsROINode")
+        roi.SetSize(70,70,20)
+
+        ijkToRas = vtk.vtkMatrix4x4()
+        inputVolume.GetIJKToRASMatrix(ijkToRas)
+        point_RAS = [0, 0, 0, 1]
+        ijkToRas.MultiplyPoint([130,58,7,1.0], point_RAS)
+        ijkToRas.SetElement(0,3,point_RAS[0])
+        ijkToRas.SetElement(1,3,point_RAS[1])
+        ijkToRas.SetElement(2,3,point_RAS[2])
+        roi.SetAndObserveObjectToNodeMatrix(ijkToRas)
+        cropVolumeParameters = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLCropVolumeParametersNode")
+        cropVolumeParameters.SetInputVolumeNodeID(inputVolume.GetID())
+        cropVolumeParameters.SetROINodeID(roi.GetID())
+        slicer.modules.cropvolume.logic().Apply(cropVolumeParameters)
+        croppedImage = cropVolumeParameters.GetOutputVolumeNode()
+        slicer.mrmlScene.RemoveNode(roi)
+
         # import your helper from DBS/Lib/dbs_segmentation.py
         from Lib import dbs_segmentation
         importlib.reload(dbs_segmentation)  # handy during development
-        dbs_segmentation.run_seg_pipeline(
-            inputVolume,
+        res,projectedError = dbs_segmentation.run_seg_pipeline(
+            croppedImage,
+            targetMarkup,
             do_centerline=do_centerline
         )
+        print(projectedError)
         logging.info(f"Pipeline finished in {time.time()-start:.2f}s")
 
 #

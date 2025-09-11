@@ -50,7 +50,7 @@ def _numpy_from_segment(segmentationNode, segmentId, referenceVolumeNode):
         arr = np.zeros(slicer.util.arrayFromVolume(referenceVolumeNode).shape, dtype=np.uint8)
     return (arr > 0).astype(np.uint8)
 
-def run_seg_pipeline(path_or_volumeNode, *, do_centerline=False):
+def run_seg_pipeline(path_or_volumeNode,target, *, do_centerline=False):
     """
     Fully automatic pipeline. Reuses the last segmentation & last segment so you never
     depend on a hard-coded name, and multiple Apply clicks work cleanly.
@@ -85,7 +85,7 @@ def run_seg_pipeline(path_or_volumeNode, *, do_centerline=False):
     segmentEditorWidget.setActiveEffectByName("Threshold")
     effect = segmentEditorWidget.activeEffect()
     effect.setParameter("MinimumThreshold", "40")
-    effect.setParameter("MaximumThreshold", "95")
+    effect.setParameter("MaximumThreshold", "125")
     effect.self().onApply()
 
     # Clean up editor widget/node
@@ -210,5 +210,43 @@ def run_seg_pipeline(path_or_volumeNode, *, do_centerline=False):
         print(f"Successfully created a line with {len(centerline_points_ras)} points.")
         results["curveNode"] = curveNode
 
-    return results
+
+        # Find the parametric equation:
+        # Compute centroid
+        arr = np.array(centerline_points_ras)
+        centroid = arr.mean(axis=0)
+
+        # Subtract centroid
+        X = arr - centroid
+
+        # Singular Value Decomposition (PCA)
+        _, _, vh = np.linalg.svd(X)
+        direction = vh[0]  # first principal component
+
+        print("Point on line (centroid):", centroid)
+        print("Direction vector:", direction)
+        print(f"Line equation: r(t) = {centroid} + t * {direction}")
+
+        ras = [0,0,0]
+        target.GetNthControlPointPosition(0,ras)
+
+        z_target = ras[2]
+        t = (z_target - centroid[2]) / direction[2]
+        point_at_z = centroid + t * direction
+        target.AddControlPointWorld(point_at_z,"projected")
+
+        #z_target = ras[2]+30
+        #t = (z_target - centroid[2]) / direction[2]
+        #point_at_z = centroid + t * direction
+        #target.AddControlPointWorld(point_at_z,"projected")
+        #print(ras[0:1])
+        v1 = np.array([ras[0],ras[1]])
+        v2 = np.array([point_at_z[0],point_at_z[1]])
+        #calculate the error:
+        print(ras)
+        error = np.linalg.norm(v1 - v2)
+        print(error)
+
+
+    return results,error
 
