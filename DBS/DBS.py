@@ -328,7 +328,7 @@ class DBSLogic(ScriptedLoadableModuleLogic):
 
 
         res,projectedError = dbs_segmentation.run_seg_pipeline(
-            #croppedImage,
+            croppedImage,
             inputVolume,
             targetMarkup,
             stlFilePath
