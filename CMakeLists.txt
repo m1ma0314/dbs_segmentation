@@ -19,6 +19,8 @@ include(${Slicer_USE_FILE})
 #-----------------------------------------------------------------------------
 # Extension modules
 add_subdirectory(DBS)
+add_subdirectory(DBS_fiducial_segmentation)
+add_subdirectory(test_again)
 ## NEXT_MODULE
 
 #-----------------------------------------------------------------------------
