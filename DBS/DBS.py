@@ -248,12 +248,7 @@ class DBSWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
             self.logic.process(
                 inputVolume=p.inputVolume,
                 targetMarkup=p.targetMarkup,
-<<<<<<< Updated upstream
-                segment_name=p.segmentName,
-                do_centerline=p.doCenterline
-=======
                 segment_name=p.segmentName
->>>>>>> Stashed changes
             )
 
 #
