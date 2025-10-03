@@ -288,10 +288,7 @@ class DBSLogic(ScriptedLoadableModuleLogic):
         logging.info("Pipeline started")
 
         #crop image
-<<<<<<< Updated upstream
-=======
         
->>>>>>> Stashed changes
         roi=slicer.mrmlScene.AddNewNodeByClass("vtkMRMLMarkupsROINode")
         roi.SetSize(70,70,20)
 
@@ -312,27 +309,17 @@ class DBSLogic(ScriptedLoadableModuleLogic):
 
         # import your helper from DBS/Lib/dbs_segmentation.py
         from Lib import dbs_segmentation
-<<<<<<< Updated upstream
-        importlib.reload(dbs_segmentation)  # handy during development
-        res,projectedError = dbs_segmentation.run_seg_pipeline(
-            croppedImage,
-            targetMarkup,
-            do_centerline=do_centerline
-=======
         importlib.reload(dbs_segmentation) 
 
         # import fiducial reference stl file
         moduleDir = os.path.dirname(__file__)
         stlFilePath = os.path.join(moduleDir, "Resources", "tube-Body001.stl")
 
-
-
         res,projectedError = dbs_segmentation.run_seg_pipeline(
             croppedImage,
             inputVolume,
             targetMarkup,
             stlFilePath
->>>>>>> Stashed changes
         )
         print(projectedError)
         logging.info(f"Pipeline finished in {time.time()-start:.2f}s")

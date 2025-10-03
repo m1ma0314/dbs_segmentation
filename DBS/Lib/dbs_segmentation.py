@@ -51,19 +51,11 @@ def _numpy_from_segment(segmentationNode, segmentId, referenceVolumeNode):
         arr = np.zeros(slicer.util.arrayFromVolume(referenceVolumeNode).shape, dtype=np.uint8)
     return (arr > 0).astype(np.uint8)
 
-<<<<<<< Updated upstream
-def run_seg_pipeline(path_or_volumeNode,target, *, do_centerline=False):
-    """
-    Fully automatic pipeline. Reuses the last segmentation & last segment so you never
-    depend on a hard-coded name, and multiple Apply clicks work cleanly.
-    """
-=======
 
 
 
 
 def run_seg_pipeline(path_or_volumeNode, target, stl_path):
->>>>>>> Stashed changes
     # ---------------------------
     # INPUT HANDLING
     # ---------------------------
@@ -92,10 +84,6 @@ def run_seg_pipeline(path_or_volumeNode, target, stl_path):
 
     segmentEditorWidget.setActiveEffectByName("Threshold")
     effect = segmentEditorWidget.activeEffect()
-<<<<<<< Updated upstream
-    effect.setParameter("MinimumThreshold", "40")
-    effect.setParameter("MaximumThreshold", "125")
-=======
 
     ###### testing automatic thresholding ######
     # Convert image data to numpy array
@@ -110,7 +98,6 @@ def run_seg_pipeline(path_or_volumeNode, target, stl_path):
     effect.setParameter("MinimumThreshold", lower_percentile)
     effect.setParameter("MaximumThreshold", upper_percentile)
 
->>>>>>> Stashed changes
     effect.self().onApply()
 
     segmentEditorWidget = None
@@ -338,82 +325,5 @@ def run_seg_pipeline(path_or_volumeNode, target, stl_path):
         "final_mask": final_mask
     }
 
-<<<<<<< Updated upstream
-    # ============================================================
-    # =============== PART 4 (OPTIONAL centerline) ===============
-    # ============================================================
-    if do_centerline:
-        print("Calculating centerline directly from slice midpoints...")
-        centerline_points = []
-        for y in range(smoothed_mask.shape[1]):
-            current_slice = final_mask[:, y, :]
-            coords = np.argwhere(current_slice)
-            if coords.size:
-                mid_z, mid_x = coords.mean(axis=0)
-                centerline_points.append((mid_z, y, mid_x))
-
-        ijkToRasMatrix = vtk.vtkMatrix4x4()
-        volumeNode.GetIJKToRASMatrix(ijkToRasMatrix)
-
-        centerline_points_ras = []
-        for ijk_point in centerline_points:
-            p_ijk = [ijk_point[2], ijk_point[1], ijk_point[0], 1]  # I,J,K -> X,Y,Z
-            p_ras = [0, 0, 0, 0]
-            ijkToRasMatrix.MultiplyPoint(p_ijk, p_ras)
-            centerline_points_ras.append(p_ras[0:3])
-
-        curveNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLMarkupsCurveNode")
-        curveNode.SetName("CenterLine")
-        for point in centerline_points_ras:
-            curveNode.AddControlPoint(vtk.vtkVector3d(point[0], point[1], point[2]))
-        dn = curveNode.GetDisplayNode()
-        if dn:
-            dn.SetColor(1, 0, 1)
-            dn.SetGlyphScale(1.0)
-            dn.SetLineWidth(1.0)
-
-        print(f"Successfully created a line with {len(centerline_points_ras)} points.")
-        results["curveNode"] = curveNode
-
-
-        # Find the parametric equation:
-        # Compute centroid
-        arr = np.array(centerline_points_ras)
-        centroid = arr.mean(axis=0)
-
-        # Subtract centroid
-        X = arr - centroid
-
-        # Singular Value Decomposition (PCA)
-        _, _, vh = np.linalg.svd(X)
-        direction = vh[0]  # first principal component
-
-        print("Point on line (centroid):", centroid)
-        print("Direction vector:", direction)
-        print(f"Line equation: r(t) = {centroid} + t * {direction}")
-
-        ras = [0,0,0]
-        target.GetNthControlPointPosition(0,ras)
-
-        z_target = ras[2]
-        t = (z_target - centroid[2]) / direction[2]
-        point_at_z = centroid + t * direction
-        target.AddControlPointWorld(point_at_z,"projected")
-
-        #z_target = ras[2]+30
-        #t = (z_target - centroid[2]) / direction[2]
-        #point_at_z = centroid + t * direction
-        #target.AddControlPointWorld(point_at_z,"projected")
-        #print(ras[0:1])
-        v1 = np.array([ras[0],ras[1]])
-        v2 = np.array([point_at_z[0],point_at_z[1]])
-        #calculate the error:
-        print(ras)
-        error = np.linalg.norm(v1 - v2)
-        print(error)
-
-
-=======
->>>>>>> Stashed changes
     return results,error
 

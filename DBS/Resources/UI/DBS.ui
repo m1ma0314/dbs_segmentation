@@ -67,26 +67,6 @@
         </property>
        </widget>
       </item>
-<<<<<<< Updated upstream
-      <item row="3" column="0">
-       <widget class="QLabel" name="label_2">
-        <property name="text">
-         <string>Optional Parameter</string>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="1">
-       <widget class="QCheckBox" name="centerlineCheckBox">
-        <property name="text">
-         <string>Centerline</string>
-        </property>
-        <property name="SlicerParameterName" stdset="0">
-         <string>doCenterline</string>
-        </property>
-       </widget>
-      </item>
-=======
->>>>>>> Stashed changes
       <item row="2" column="0">
        <widget class="QLabel" name="label_3">
         <property name="text">
